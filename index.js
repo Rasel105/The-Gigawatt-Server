@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require("cors")
 const app = express();
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // app is called instane 
@@ -18,6 +19,21 @@ async function run() {
         await client.connect();
         const productCollection = client.db("gigawatt").collection("products");
         const purchaseCollection = client.db("gigawatt").collection("purchase");
+        const userCollection = client.db("gigawatt").collection("users");
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, accessToken: token });
+        })
+
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -38,6 +54,20 @@ async function run() {
             const result = await purchaseCollection.insertOne(newPurchase);
             res.send(result);
         });
+
+        // app.get('/myorders', async (req, res) => {
+        //     // const decodedEmail = req.decoded.email;
+        //     const email = req.query.email;
+        //     if (email === decodedEmail) {
+        //         const query = { email };
+        //         const cursor = purchaseCollection.find(query);
+        //         const myorders = await cursor.toArray();
+        //         res.send(myorders);
+        //     } else {
+        //         res.status(403).send({ message: "Forbidden" })
+        //     }
+
+        // });
 
     } finally {
 
