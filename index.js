@@ -40,9 +40,11 @@ async function run() {
 
 
         app.get('/users', async (req, res) => {
-            const users = await userCollection.find().toArray();
+            const email = req.query.email;
+            const query = { email: email };
+            const users = await userCollection.find(query).toArray();
             res.send(users);
-        })
+        });
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -81,8 +83,6 @@ async function run() {
 
         app.get("/myorders", verifyJWT, async (req, res) => {
             const email = req.query.email;
-            // const authorization = req.headers.authorization;
-            // console.log("Authheder", authorization);
             const decodedEmail = req.decoded.email;
             if (email === decodedEmail) {
                 const query = { email: email };
@@ -93,6 +93,14 @@ async function run() {
             else {
                 return res.status(403).send({ message: "Forbidden access" });
             }
+        });
+
+        app.delete('/myorder/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await purchaseCollection.deleteOne(filter);
+            // console.log(result);
+            res.send(result);
         })
 
         // app.get('/myorders', async (req, res) => {
