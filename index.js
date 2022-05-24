@@ -37,6 +37,7 @@ async function run() {
         const productCollection = client.db("gigawatt").collection("products");
         const purchaseCollection = client.db("gigawatt").collection("purchase");
         const userCollection = client.db("gigawatt").collection("users");
+        const reviewCollection = client.db("gigawatt").collection("reviews");
 
 
         app.get('/users', async (req, res) => {
@@ -80,6 +81,12 @@ async function run() {
             res.send(result);
         });
 
+        app.post("/review", async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
+
 
         app.get("/myorders", verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -89,6 +96,20 @@ async function run() {
                 const cursor = purchaseCollection.find(query);
                 const myorders = await cursor.toArray();
                 return res.send(myorders);
+            }
+            else {
+                return res.status(403).send({ message: "Forbidden access" });
+            }
+        });
+
+        app.get("/reviews", verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const cursor = reviewCollection.find(query);
+                const reviews = await cursor.toArray();
+                return res.send(reviews);
             }
             else {
                 return res.status(403).send({ message: "Forbidden access" });
