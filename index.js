@@ -100,7 +100,7 @@ async function run() {
             res.send(result);
         });
 
-        app.post("/product", verifyJWT, async (req, res) => {
+        app.post("/product", async (req, res) => {
             const newProduct = req.body;
             const result = await productCollection.insertOne(newProduct);
             res.send(result);
@@ -146,6 +146,13 @@ async function run() {
                 return res.status(403).send({ message: "Forbidden access" });
             }
         });
+
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query);
+            res.send(result);
+        })
 
         app.delete('/myorder/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
