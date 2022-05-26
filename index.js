@@ -106,6 +106,18 @@ async function run() {
             res.send(result);
         });
 
+        app.put('/purchase/:id', async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: data
+            };
+            const result = await purchaseCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+
         app.post("/purchase", async (req, res) => {
             const newPurchase = req.body;
             const result = await purchaseCollection.insertOne(newPurchase);
@@ -133,6 +145,13 @@ async function run() {
             }
         });
 
+        app.get("/payment/:id", verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const payment = await purchaseCollection.findOne(query);
+            res.send(payment);
+        })
+
         app.get("/reviews", verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -146,6 +165,14 @@ async function run() {
                 return res.status(403).send({ message: "Forbidden access" });
             }
         });
+
+        app.get('/orders', verifyJWT, async (req, res) => {
+            const query = {};
+            const cursor = purchaseCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
+        });
+
 
         app.delete('/product/:id', async (req, res) => {
             const id = req.params.id;
