@@ -107,7 +107,6 @@ async function run() {
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            console.log(user)
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
