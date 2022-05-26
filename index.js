@@ -156,6 +156,17 @@ async function run() {
             const updatedItem = await productCollection.updateOne(filter, updateDocument);
             res.send(updatedItem);
         });
+        // shipped update 
+        app.patch('/shipped/:id', async (req, res) => {
+            const id = req.params.id;
+            const shipped = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updateDocument = {
+                $set: shipped
+            };
+            const updatedItem = await purchaseCollection.updateOne(filter, updateDocument);
+            res.send(updatedItem);
+        });
 
         app.post("/purchase", async (req, res) => {
             const newPurchase = req.body;
@@ -220,7 +231,7 @@ async function run() {
         })
 
         app.delete('/myorder/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;   
+            const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.deleteOne(query);
             res.send(result);
