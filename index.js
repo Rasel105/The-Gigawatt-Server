@@ -57,7 +57,6 @@ async function run() {
         app.patch("/payment-order/:id", verifyJWT, async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
-            console.log(payment)
             const filter = { _id: ObjectId(id) };
             const updateDoc = {
                 $set: {
@@ -221,27 +220,13 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/myorder/:email', verifyJWT, async (req, res) => {
-            const email = req.params.email;
-            const filter = { email: email };
-            const result = await purchaseCollection.deleteOne(filter);
-            // console.log(result);
+        app.delete('/myorder/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;   
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
             res.send(result);
         })
 
-        // app.get('/myorders', async (req, res) => {
-        //     // const decodedEmail = req.decoded.email;
-        //     const email = req.query.email;
-        //     if (email === decodedEmail) {
-        //         const query = { email };
-        //         const cursor = purchaseCollection.find(query);
-        //         const myorders = await cursor.toArray();
-        //         res.send(myorders);
-        //     } else {
-        //         res.status(403).send({ message: "Forbidden" })
-        //     }
-
-        // });
 
     } finally {
 
