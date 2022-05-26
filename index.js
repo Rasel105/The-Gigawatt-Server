@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require("cors")
-const app = express();
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-// app is called instane 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+
+const app = express();
 const port = process.env.PORT || 5000;
 
 
@@ -38,7 +40,35 @@ async function run() {
         const purchaseCollection = client.db("gigawatt").collection("purchase");
         const userCollection = client.db("gigawatt").collection("users");
         const reviewCollection = client.db("gigawatt").collection("reviews");
+        const paymentCollection = client.db("gigawatt").collection("payments");
 
+
+        app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+            const { totalPrice } = req.body;
+            const amount = totalPrice * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "eur",
+                payment_method_types: ['card']
+            })
+            res.send({ clientSecret: paymentIntent.client_secret });
+        })
+
+        app.patch("/payment-order/:id", verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            console.log(payment)
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                }
+            }
+            const result = await paymentCollection.insertOne(payment);
+            const updatedPayment = await purchaseCollection.updateOne(filter, updateDoc);
+            res.send(updateDoc);
+        })
 
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -173,6 +203,12 @@ async function run() {
             res.send(orders);
         });
 
+        app.delete('/orders-delete/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
+            res.send(result);
+        })
 
         app.delete('/product/:id', async (req, res) => {
             const id = req.params.id;
