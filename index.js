@@ -75,12 +75,17 @@ async function run() {
             res.send(users);
         });
 
+        app.get('/user-profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const users = await userCollection.findOne({ email })
+            res.send(users);
+        });
+
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin });
-
         })
 
         app.put('/user/admin/:email', verifyJWT, async (req, res) => {
@@ -136,16 +141,22 @@ async function run() {
             res.send(result);
         });
 
-        app.put('/purchase/:id', async (req, res) => {
-            const id = req.params.id;
-            const data = req.body;
-            const filter = { _id: ObjectId(id) };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: data
-            };
-            const result = await purchaseCollection.updateOne(filter, updateDoc, options);
+        app.post('/purchase', async (req, res) => {
+            const newPurchase = req.body;
+            const result = await purchaseCollection.insertOne(newPurchase);
             res.send(result);
+        });
+
+        // quantity update 
+        app.patch('/purchase-update/:id', async (req, res) => {
+            const id = req.params.id;
+            const availableQuantity = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updateDocument = {
+                $set: availableQuantity
+            };
+            const updatedItem = await productCollection.updateOne(filter, updateDocument);
+            res.send(updatedItem);
         });
 
         app.post("/purchase", async (req, res) => {
@@ -182,18 +193,11 @@ async function run() {
             res.send(payment);
         })
 
-        app.get("/reviews", verifyJWT, async (req, res) => {
-            const email = req.query.email;
-            const decodedEmail = req.decoded.email;
-            if (email === decodedEmail) {
-                const query = { email: email };
-                const cursor = reviewCollection.find(query);
-                const reviews = await cursor.toArray();
-                return res.send(reviews);
-            }
-            else {
-                return res.status(403).send({ message: "Forbidden access" });
-            }
+        app.get("/reviews", async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            return res.send(reviews);
         });
 
         app.get('/orders', verifyJWT, async (req, res) => {
